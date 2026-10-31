@@ -1,353 +1,113 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+const form = document.getElementById("vibeForm");
 
-:root {
-    --pink: #ff5caa;
-    --purple: #8b5cf6;
-    --deep-purple: #55258c;
-    --ink: #40254f;
-    --muted: #806c8b;
-    --paper: #fffafd;
+if (form) {
+    form.addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        const button = document.getElementById("analyzeBtn");
+        const error = document.getElementById("errorMessage");
+
+        error.textContent = "";
+        button.disabled = true;
+        button.textContent = "ANALYZING... ✨";
+
+        const data = {
+            name: document.getElementById("name").value.trim(),
+            username: document.getElementById("username").value.trim(),
+            hobby: document.getElementById("hobby").value.trim(),
+            personality: document.getElementById("personality").value,
+            mood: document.getElementById("mood").value,
+            consent: document.getElementById("consent").checked
+        };
+
+        try {
+            const response = await fetch("/analyze", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Something went wrong");
+            }
+
+            const fields = {
+                resultName: result.name,
+                resultUsername: result.username,
+                resultVibe: result.vibe,
+                resultScore: result.score,
+                resultFunny: result.funny,
+                resultCompliment: result.compliment,
+                resultRoast: result.roast,
+                resultCute: result.cute,
+                resultVerdict: result.verdict
+            };
+
+            for (const [id, value] of Object.entries(fields)) {
+                document.getElementById(id).textContent = value;
+            }
+
+            document.getElementById("resultSection")
+                .classList.remove("hidden");
+
+            document.getElementById("resultSection")
+                .scrollIntoView({ behavior: "smooth" });
+
+        } catch (err) {
+            error.textContent = err.message;
+        } finally {
+            button.disabled = false;
+            button.textContent = "✨ ANALYZE MY VIBE";
+        }
+    });
 }
 
-* {
-    box-sizing: border-box;
+
+// Share report
+const shareButton = document.getElementById("shareBtn");
+
+if (shareButton) {
+    shareButton.addEventListener("click", async function() {
+        const text =
+            "✨ MY VIBE CHECK REPORT ✨\n" +
+            "Name: " + document.getElementById("resultName").textContent +
+            "\nVibe: " + document.getElementById("resultVibe").textContent +
+            "\nScore: " + document.getElementById("resultScore").textContent +
+            "/100";
+
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: "My Vibe Check",
+                    text: text
+                });
+            } else {
+                await navigator.clipboard.writeText(text);
+                alert("Result copied!");
+            }
+        } catch (err) {
+            if (err.name !== "AbortError") {
+                alert("Could not share result.");
+            }
+        }
+    });
 }
 
-html {
-    scroll-behavior: smooth;
+
+// Try again
+const againButton = document.getElementById("againBtn");
+
+if (againButton) {
+    againButton.addEventListener("click", function() {
+        form.reset();
+        document.getElementById("resultSection")
+            .classList.add("hidden");
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    });
 }
 
-body {
-    margin: 0;
-    min-height: 100vh;
-    color: var(--ink);
-    font-family: "Poppins", Arial, sans-serif;
-    background:
-        radial-gradient(circle at 10% 10%, #ffe1f1 0, transparent 30%),
-        radial-gradient(circle at 90% 30%, #e8dcff 0, transparent 32%),
-        linear-gradient(135deg, #fff7fb, #f7f0ff);
-}
-
-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 18px clamp(18px, 6vw, 80px);
-    background: rgba(255, 255, 255, 0.78);
-    border-bottom: 1px solid rgba(139, 92, 246, 0.12);
-    backdrop-filter: blur(12px);
-}
-
-header h2 {
-    margin: 0;
-    color: var(--deep-purple);
-    font-size: clamp(18px, 3vw, 25px);
-    font-weight: 800;
-    letter-spacing: -0.5px;
-}
-
-header a {
-    padding: 11px 18px;
-    color: white;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 700;
-    border-radius: 999px;
-    background: linear-gradient(110deg, var(--pink), var(--purple));
-    box-shadow: 0 7px 18px rgba(139, 92, 246, 0.22);
-}
-
-main {
-    width: min(100% - 32px, 900px);
-    margin: 0 auto;
-}
-
-.hero {
-    padding: clamp(45px, 8vw, 85px) 0 50px;
-    text-align: center;
-}
-
-.tag {
-    display: inline-block;
-    padding: 9px 15px;
-    color: #a33f91;
-    background: #ffe5f3;
-    border: 1px solid #ffd0e9;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 1px;
-}
-
-.hero h1 {
-    max-width: 760px;
-    margin: 22px auto 12px;
-    color: #44245f;
-    font-size: clamp(38px, 7vw, 70px);
-    line-height: 1.08;
-    letter-spacing: -2px;
-}
-
-.hero h1 span {
-    color: var(--pink);
-}
-
-.hero > p {
-    margin: 0 auto 30px;
-    color: var(--muted);
-    font-size: clamp(15px, 2.5vw, 18px);
-}
-
-.form-card,
-.result-card {
-    width: min(100%, 620px);
-    margin: 28px auto 0;
-    padding: clamp(22px, 5vw, 38px);
-    text-align: left;
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid #f4d8ed;
-    border-radius: 28px;
-    box-shadow: 0 20px 55px rgba(104, 55, 135, 0.12);
-}
-
-.form-card h2,
-.result-card > h2:first-child {
-    margin: 0 0 24px;
-    color: var(--deep-purple);
-    font-size: clamp(22px, 4vw, 28px);
-    text-align: center;
-}
-
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-form > label:not(.consent) {
-    margin-top: 8px;
-    color: #5c426d;
-    font-size: 14px;
-    font-weight: 700;
-}
-
-input:not([type="checkbox"]),
-select {
-    width: 100%;
-    min-height: 49px;
-    padding: 12px 14px;
-    color: var(--ink);
-    font: inherit;
-    font-size: 14px;
-    background: #fffafd;
-    border: 1px solid #ead9f0;
-    border-radius: 13px;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-input:not([type="checkbox"]):focus,
-select:focus {
-    border-color: #c084fc;
-    box-shadow: 0 0 0 4px rgba(192, 132, 252, 0.16);
-}
-
-.consent {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    margin: 15px 0 5px;
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.6;
-}
-
-.consent input {
-    flex: 0 0 auto;
-    width: 17px;
-    height: 17px;
-    margin-top: 2px;
-    accent-color: var(--purple);
-}
-
-button {
-    min-height: 49px;
-    padding: 13px 20px;
-    color: white;
-    font: inherit;
-    font-size: 14px;
-    font-weight: 800;
-    border: 0;
-    border-radius: 999px;
-    background: linear-gradient(110deg, var(--pink), var(--purple));
-    box-shadow: 0 9px 20px rgba(139, 92, 246, 0.2);
-    cursor: pointer;
-    transition: transform 0.18s, box-shadow 0.18s;
-}
-
-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 25px rgba(139, 92, 246, 0.28);
-}
-
-button:active {
-    transform: translateY(0);
-}
-
-#analyzeBtn {
-    margin-top: 10px;
-}
-
-#errorMessage {
-    margin: 0;
-    color: #c02665;
-    font-size: 13px;
-    text-align: center;
-}
-
-.hidden {
-    display: none !important;
-}
-
-#resultSection {
-    padding: 0 0 55px;
-    text-align: center;
-}
-
-.result-card {
-    margin-top: 0;
-    text-align: center;
-    background:
-        radial-gradient(circle at 100% 0, #f4e7ff, transparent 32%),
-        rgba(255, 255, 255, 0.94);
-}
-
-#resultName {
-    margin: 8px 0;
-    color: var(--deep-purple);
-    font-size: clamp(30px, 6vw, 48px);
-    overflow-wrap: anywhere;
-}
-
-#resultUsername {
-    margin: 0 0 15px;
-    color: var(--muted);
-    font-size: 14px;
-    overflow-wrap: anywhere;
-}
-
-#resultVibe {
-    margin: 15px 0;
-    color: #d946a2;
-    font-size: clamp(22px, 4vw, 30px);
-}
-
-.score {
-    display: inline-block;
-    margin: 10px 0 22px;
-    padding: 13px 24px;
-    color: #8b3bb0;
-    background: #f5e8ff;
-    border: 1px solid #e8d2ff;
-    border-radius: 18px;
-    font-size: 20px;
-    font-weight: 800;
-}
-
-#resultScore {
-    font-size: 34px;
-}
-
-.report {
-    margin-top: 13px;
-    padding: 17px 19px;
-    text-align: left;
-    background: #fff7fc;
-    border: 1px solid #f5dced;
-    border-radius: 17px;
-}
-
-.report h3 {
-    margin: 0 0 7px;
-    color: #8e438a;
-    font-size: 16px;
-}
-
-.report p {
-    margin: 0;
-    color: #6d5a78;
-    font-size: 14px;
-    line-height: 1.7;
-    overflow-wrap: anywhere;
-}
-
-#resultVerdict {
-    margin: 22px 0 0;
-    color: var(--deep-purple);
-    font-size: 18px;
-}
-
-.disclaimer {
-    margin: 22px 0 0;
-    color: #9b8aa3;
-    font-size: 11px;
-    line-height: 1.6;
-}
-
-#shareBtn,
-#againBtn {
-    margin: 18px 5px 0;
-}
-
-#againBtn {
-    color: var(--deep-purple);
-    background: white;
-    border: 1px solid #e5d4f2;
-    box-shadow: none;
-}
-
-footer {
-    padding: 25px 15px 32px;
-    color: #8b719a;
-    font-size: 13px;
-    text-align: center;
-}
-
-@media (max-width: 520px) {
-    header {
-        padding: 14px 16px;
-    }
-
-    header h2 {
-        font-size: 16px;
-    }
-
-    header a {
-        padding: 10px 13px;
-        font-size: 12px;
-    }
-
-    main {
-        width: min(100% - 22px, 900px);
-    }
-
-    .hero {
-        padding-top: 42px;
-    }
-
-    .hero h1 {
-        letter-spacing: -1px;
-    }
-
-    .form-card,
-    .result-card {
-        border-radius: 22px;
-    }
-
-    #shareBtn,
-    #againBtn {
-        width: 100%;
-        margin: 10px 0 0;
-    }
-}
