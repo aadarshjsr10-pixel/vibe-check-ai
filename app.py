@@ -2,7 +2,7 @@
 
 from flask import (
     Flask, render_template, request,
-    redirect, url_for, jsonify
+    redirect, url_for, jsonify, session
 )
 
 from flask_sqlalchemy import SQLAlchemy
@@ -29,6 +29,9 @@ import random
 # ==================================
 
 app = Flask(__name__)
+@app.before_request
+def log_session():
+    print(f"[SESSION INFO] SessionID: {session.sid}")
 
 app.config["SECRET_KEY"] = os.environ.get(
     "SECRET_KEY",
