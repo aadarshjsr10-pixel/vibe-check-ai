@@ -31,7 +31,7 @@ import random
 app = Flask(__name__)
 @app.before_request
 def log_session_status():
-    print(f"[SESSION INFO] SessionID: {session.sid}")
+    print(f"[SESSION INFO] Has session data: {bool(session)}")
 
 app.config["SECRET_KEY"] = os.environ.get(
     "SECRET_KEY",
