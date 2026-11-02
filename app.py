@@ -22,6 +22,7 @@ from getpass import getpass
 
 import os
 import random
+import uuid
 
 
 # ==================================
@@ -31,7 +32,13 @@ import random
 app = Flask(__name__)
 @app.before_request
 def log_session_status():
-    print(f"[SESSION INFO] Has session data: {bool(session)}")
+    if "visitor_session_id" not in session:
+        session["visitor_session_id"] = uuid.uuid4().hex
+
+    print(
+        f"[SESSION INFO] ID: {session['visitor_session_id']} "
+        f"| Has session data: {bool(session)}"
+    )
 
 app.config["SECRET_KEY"] = os.environ.get(
     "SECRET_KEY",
