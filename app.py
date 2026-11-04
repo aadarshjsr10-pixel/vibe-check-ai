@@ -30,6 +30,10 @@ import uuid
 # ==================================
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = os.environ.get(
+    "SECRET_KEY",
+    "local-development-secret-change-before-deployment"
+)
 @app.before_request
 def log_session_status():
     if "visitor_session_id" not in session:
@@ -40,10 +44,7 @@ def log_session_status():
         f"| Has session data: {bool(session)}"
     )
 
-app.config["SECRET_KEY"] = os.environ.get(
-    "SECRET_KEY",
-    "local-development-secret-change-before-deployment"
-)
+
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///vibecheck.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -165,25 +166,50 @@ def analyze():
             "error": "Please enter valid details."
         }), 400
 
-    hobby = (data.get("hobby") or "Music").strip()[:80]
+    hobby = data.get("hobby", "Music")
+personality = data.get("personality", "Chill")
+mood = data.get("mood", "Happy")
 
-    personality = (
-        data.get("personality") or "Chill"
-    ).strip()[:40]
+# Check that all values are strings
+if not all(
+    isinstance(value, str)
+    for value in [hobby, personality, mood]
+):
+    return jsonify({
+        "error": "Please enter valid details."
+    }), 400
 
-    mood = (
-        data.get("mood") or "Happy"
-    ).strip()[:40]
+# Remove extra spaces and limit length
+hobby = hobby.strip()[:80]
+personality = personality.strip()[:40]
+mood = mood.strip()[:40]
 
-    # Save visitor in database
+# Use defaults if fields are empty
+hobby = hobby or "Music"
+personality = personality or "Chill"
+mood = mood or "Happy"
+
+        # Save visitor in database
     visitor = Visitor(
         name=name,
         username=username or None
     )
 
     db.session.add(visitor)
-    db.session.commit()
 
+    try:
+        db.session.commit()
+
+    except Exception:
+        db.session.rollback()
+
+        app.logger.exception(
+            "Failed to save visitor in database"
+        )
+
+        return jsonify({
+            "error": "Unable to save your details. Please try again."
+        }), 500
     # Generate vibe report
     seed = f"{name}{username}{hobby}{personality}{mood}"
 
